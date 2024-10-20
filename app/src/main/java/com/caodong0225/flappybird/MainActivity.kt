@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -13,12 +13,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -63,7 +64,8 @@ fun BirdGame(modifier: Modifier = Modifier) {
     val birdSizePx: Float
     val pipeWidth = 80.dp
     val pipeHeight = 100.dp
-    with(LocalDensity.current) {
+    val density = LocalDensity.current
+    with(density) {
         birdSizePx = birdSize.toPx()  // 将 dp 转换为像素 float 值
     }
 
@@ -82,6 +84,61 @@ fun BirdGame(modifier: Modifier = Modifier) {
     // 协程处理器，用于定时更新小鸟的位置
     val coroutineScope = rememberCoroutineScope()
 
+    var isGameOver = remember { mutableStateOf(false) }
+
+
+    fun startGameLoop() {
+        coroutineScope.launch {
+            while (!isGameOver.value) {
+                birdModel.updatePosition()  // 更新小鸟位置
+
+                // 检查碰撞
+                val birdBox = birdModel.getBoundingBox()
+                val hasCollision = pipes.any { pipe -> pipe.checkCollision(birdBox, density) }
+
+                if (hasCollision) {
+                    // 碰撞发生时，停止游戏逻辑
+                    isGameOver.value = true
+                    break
+                }
+
+                // 遍历管道列表，更新每个管道的位置
+                pipes.forEach { pipe -> pipe.movement() }
+                cloudModel.movement() // 更新云朵位置
+                backgroundModel.movement(screenWidth.toInt()) // 更新背景位置
+
+                // 处理云朵和管道的可见性
+                val iterator = pipes.iterator()
+                while (iterator.hasNext()) {
+                    val pipe = iterator.next()
+                    if (!pipe.isVisible()) {
+                        iterator.remove()  // 删除不可见的管道
+                    }
+                }
+
+                // 如果管道数量不足，则添加新管道
+                if (pipes.size < 2 || (pipes.size in 2..3 && pipes[0].x < screenWidth / 3)) {
+                    val topY = Random.nextInt(20, 400)
+                    val bottomY = topY + Random.nextInt(260, 300)
+
+                    // 添加新的管道
+                    pipes.add(PipeModel(0, screenHeight, screenWidth).apply {
+                        setPosition(screenWidth.toInt(), topY)
+                    })
+                    pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
+                        setPosition(screenWidth.toInt(), bottomY)
+                    })
+                }
+
+                if (!cloudModel.isVisible()) {
+                    val cloudY = Random.nextInt(100, 200)
+                    cloudModel.setPosition(screenWidth.toInt(), cloudY)
+                }
+
+                delay(36L)  // 每 36 毫秒更新一次位置
+            }
+        }
+    }
     // 触摸事件控制小鸟的上升与下降
     Box(
         modifier = modifier
@@ -168,69 +225,37 @@ fun BirdGame(modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
 
+    // 游戏启动时调用
+    LaunchedEffect(Unit) {
+        startGameLoop()  // 启动游戏循环
+    }
 
-        // 使用协程不断更新小鸟的位置
-        LaunchedEffect(Unit) {
-            coroutineScope.launch {
-                while (true) {
-                    birdModel.updatePosition()  // 更新位置
-                    // 遍历管道列表，更新每个管道的位置
-                    pipes.forEach { pipe ->
-                        pipe.movement()
-                    }
-                    cloudModel.movement() // 更新云朵位置
-                    backgroundModel.movement(screenWidth.toInt()) // 更新背景图片的位置
+    // 当游戏结束时显示 "Game Over" 并允许点击重新启动游戏
+    if (isGameOver.value) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    // 点击后重新开始游戏
+                    isGameOver.value = false
+                    birdModel.reset()  // 重置小鸟状态
+                    pipes.clear()  // 清空管道
 
-                    val cloudY = Random.nextInt(100, 200)
-                    // 确保管道的可见性
-                    // 检查每个管道的可见性并处理不可见的管道
-                    val iterator = pipes.iterator()
-                    while (iterator.hasNext()) {
-                        val pipe = iterator.next()
-                        if (!pipe.isVisible()) {
-                            iterator.remove() // 删除不可见的管道
-                        }
-                    }
-                    // 如果列表中已经没有管道了，则添加新的管道
-                    if (pipes.size in 1..2) {
-                        if(pipes[0].x< screenWidth/2)
-                        {
-                            // 生成随机的Y坐标
-                            val topY = Random.nextInt(20, 400)
-                            val bottomY = topY + Random.nextInt(200, 260)
-
-                            // 新建一对新的管道并加入列表
-                            pipes.add(PipeModel(0, screenHeight, screenWidth).apply {
-                                setPosition(screenWidth.toInt(), topY)
-                            })
-                            pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
-                                setPosition(screenWidth.toInt(), bottomY)
-                            })
-                        }
-                    }
-                    else if(pipes.size < 2)
-                    {
-                        // 生成随机的Y坐标
-                        val topY = Random.nextInt(20, 400)
-                        val bottomY = topY + Random.nextInt(200, 260)
-
-                        // 新建一对新的管道并加入列表
-                        pipes.add(PipeModel(0, screenHeight, screenWidth).apply {
-                            setPosition(screenWidth.toInt(), topY)
-                        })
-                        pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
-                            setPosition(screenWidth.toInt(), bottomY)
-                        })
-                    }
-                    if (!cloudModel.isVisible()) {
-                        cloudModel.setPosition(screenWidth.toInt(), cloudY)
-                    }
-                    delay(36L)  // 每 16 毫秒更新一次位置，大约相当于 60 帧每秒
-                }
-            }
+                    // 重新启动游戏循环
+                    startGameLoop()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.over),  // 假设有一个 "Game Over" 图标
+                contentDescription = "Game Over",
+                modifier = Modifier.size(200.dp)  // 设置图标大小
+            )
         }
     }
+
 }
 
 

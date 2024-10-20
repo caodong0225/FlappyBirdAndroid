@@ -3,6 +3,7 @@ package com.caodong0225.flappybird.model
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
 import com.caodong0225.flappybird.R
 
 
@@ -23,6 +24,8 @@ class BirdModel(private val screenHeight: Float) {
     // 重力影响的加速度
     private val gravity = 9.8f
 
+    private val birdSizePx = 60
+
     // 小鸟的状态（是否处于上升状态）
     var isFlying by mutableStateOf(false)
         private set
@@ -38,6 +41,15 @@ class BirdModel(private val screenHeight: Float) {
         isFlying = false
     }
 
+    fun reset()
+    {
+        this.positionY = 0F
+    }
+
+    fun getBoundingBox(): Rect {
+        val birdX = 0f // The X position of the bird; this should match your UI layout
+        return Rect(birdX, positionY, birdX + birdSizePx, positionY + birdSizePx)
+    }
 
     // 更新小鸟的位置，考虑速度和重力
     fun updatePosition() {

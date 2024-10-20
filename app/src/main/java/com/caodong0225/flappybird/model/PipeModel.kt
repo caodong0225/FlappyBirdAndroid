@@ -1,12 +1,14 @@
 package com.caodong0225.flappybird.model
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.caodong0225.flappybird.R
-import kotlin.random.Random
 
 class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for top pipe
                 private val screenHeight: Float,
@@ -27,7 +29,7 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
     var visible: Boolean = true
 
     // 当前管道图片资源 ID
-    var pipeImageResId by mutableStateOf(if (type == 1) pipeImages[2] else pipeImages[0]) // 0 for top pipe, 2 for bottom pipe
+    var pipeImageResId by mutableStateOf(if (type == 2) pipeImages[2] else pipeImages[1]) // 0 for top pipe, 2 for bottom pipe
 
     // 管道列表用于填充
     val filledPipes = mutableListOf<PipeModel>()
@@ -51,6 +53,21 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
         return pipeImageResId // 返回当前的图片资源 ID
     }
 
+    // Inside PipeModel
+    fun getBoundingBox(density: Density): Rect {
+        with(density) {
+            val pipeWidthPx = 50
+            val pipeHeightPx = 35
+            return Rect(x.toFloat(), y.toFloat(), (x + pipeWidthPx).toFloat(),
+                (y + pipeHeightPx).toFloat()
+            )
+        }
+    }
+
+    fun checkCollision(birdBox: Rect, density: Density): Boolean {
+        val pipeBox = getBoundingBox( density)
+        return birdBox.overlaps(pipeBox)
+    }
 
     // 填充普通管道
     private fun fillWithPipes(x:Int, topY: Int, direction: Int) {
