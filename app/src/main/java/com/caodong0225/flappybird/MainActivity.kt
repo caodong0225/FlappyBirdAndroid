@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.caodong0225.flappybird.model.BirdModel
+import com.caodong0225.flappybird.model.CloudModel
 import com.caodong0225.flappybird.model.PipeModel
 import com.caodong0225.flappybird.ui.theme.FlappyBirdTheme
 import com.caodong0225.flappybird.util.ScreenUtils
@@ -61,12 +62,16 @@ fun BirdGame(modifier: Modifier = Modifier) {
     with(LocalDensity.current) {
         birdSizePx = birdSize.toPx()  // 将 dp 转换为像素 float 值
     }
+
     // 创建 BirdModel 实例来控制小鸟的状态
     val birdModel = remember { BirdModel(screenHeight - birdSizePx) }
 
     val topPipe = remember { PipeModel(0, screenHeight, screenWidth) } // 创建顶部管道
     val bottomPipe = remember { PipeModel(2, screenHeight, screenWidth) } // 创建底部管道
 
+    val cloudModel = remember {
+        CloudModel()
+    }
     // 协程处理器，用于定时更新小鸟的位置
     val coroutineScope = rememberCoroutineScope()
 
@@ -90,6 +95,16 @@ fun BirdGame(modifier: Modifier = Modifier) {
                 }
             }
     ) {
+        // 绘制云朵
+        Image(
+            painter = painterResource(id = cloudModel.cloudImageResId), // 获取云朵的图片资源
+            contentDescription = "Cloud",
+            modifier = Modifier
+                .offset(x = cloudModel.x.dp, y = cloudModel.y.dp) // 根据云朵的坐标更新位置
+                .size(100.dp, 50.dp) // 根据需要设置云朵的大小
+        )
+
+
         // 图片展示小鸟，并使用 BirdModel 的 positionY 来设置垂直位置
         Image(
             painter = painterResource(id = birdModel.birdImageResId),
@@ -107,7 +122,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
             contentDescription = "Top Pipe",
             modifier = Modifier
                 .offset(x = topPipe.x.dp, y = topPipe.y.dp) // 根据管道的坐标更新位置
-                .size(pipeWidth,pipeHeight)
+                .size(pipeWidth, pipeHeight)
         )
 
         Image(
@@ -115,7 +130,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
             contentDescription = "Bottom Pipe",
             modifier = Modifier
                 .offset(x = bottomPipe.x.dp, y = bottomPipe.y.dp) // 根据管道的坐标更新位置
-                .size(pipeWidth,pipeHeight)
+                .size(pipeWidth, pipeHeight)
         )
 
         // 绘制中间管道
@@ -137,17 +152,23 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     birdModel.updatePosition()  // 更新位置
                     topPipe.movement() // 更新顶部管道位置
                     bottomPipe.movement() // 更新底部管道位置
+                    cloudModel.movement()
 
                     val topY = Random.nextInt(20, 400)
 
                     val bottomY = topY + Random.nextInt(200, 260)
 
+                    val cloudY = Random.nextInt(100, 200)
                     // 确保管道的可见性
                     if (!topPipe.isVisible()) {
                         topPipe.setPosition(screenWidth.toInt(), topY) // 如果不可见，重新设置位置
                     }
                     if (!bottomPipe.isVisible()) {
                         bottomPipe.setPosition(screenWidth.toInt(), bottomY) // 如果不可见，重新设置位置
+                    }
+                    if(!cloudModel.isVisible())
+                    {
+                        cloudModel.setPosition(screenWidth.toInt(), cloudY)
                     }
                     delay(36L)  // 每 16 毫秒更新一次位置，大约相当于 60 帧每秒
                 }
