@@ -54,7 +54,6 @@ class BirdModel(private val screenHeight: Float) {
 
         // 防止小鸟掉到地面以下
         if (positionY > screenHeight) {
-            println(screenHeight)
             positionY = screenHeight
         }
 

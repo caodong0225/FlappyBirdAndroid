@@ -30,6 +30,7 @@ import com.caodong0225.flappybird.ui.theme.FlappyBirdTheme
 import com.caodong0225.flappybird.util.ScreenUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,7 +64,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
     // 创建 BirdModel 实例来控制小鸟的状态
     val birdModel = remember { BirdModel(screenHeight - birdSizePx) }
 
-    val topPipe = remember { PipeModel(1, screenHeight, screenWidth) } // 创建顶部管道
+    val topPipe = remember { PipeModel(0, screenHeight, screenWidth) } // 创建顶部管道
     val bottomPipe = remember { PipeModel(2, screenHeight, screenWidth) } // 创建底部管道
 
     // 协程处理器，用于定时更新小鸟的位置
@@ -102,7 +103,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
 
         // 绘制管道
         Image(
-            painter = painterResource(id = topPipe.draw()), // 获取顶部管道的图片资源
+            painter = painterResource(id = R.drawable.pipe_top), // 获取顶部管道的图片资源
             contentDescription = "Top Pipe",
             modifier = Modifier
                 .offset(x = topPipe.x.dp, y = topPipe.y.dp) // 根据管道的坐标更新位置
@@ -110,12 +111,24 @@ fun BirdGame(modifier: Modifier = Modifier) {
         )
 
         Image(
-            painter = painterResource(id = bottomPipe.draw()), // 获取底部管道的图片资源
+            painter = painterResource(id = R.drawable.pipe_bottom), // 获取底部管道的图片资源
             contentDescription = "Bottom Pipe",
             modifier = Modifier
                 .offset(x = bottomPipe.x.dp, y = bottomPipe.y.dp) // 根据管道的坐标更新位置
                 .size(pipeWidth,pipeHeight)
         )
+
+        // 绘制中间管道
+        val filledPipes = topPipe.filledPipes.plus(bottomPipe.filledPipes)
+        for (filledPipe in filledPipes) {
+            Image(
+                painter = painterResource(id = R.drawable.pipe), // 中间管道使用普通的管道图片
+                contentDescription = "Middle Pipe",
+                modifier = Modifier
+                    .offset(x = filledPipe.x.dp, y = filledPipe.y.dp)
+                    .size(pipeWidth, pipeHeight) // 根据需要设置中间管道的高度
+            )
+        }
 
         // 使用协程不断更新小鸟的位置
         LaunchedEffect(Unit) {
@@ -125,12 +138,16 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     topPipe.movement() // 更新顶部管道位置
                     bottomPipe.movement() // 更新底部管道位置
 
+                    val topY = Random.nextInt(20, 400)
+
+                    val bottomY = topY + Random.nextInt(200, 260)
+
                     // 确保管道的可见性
                     if (!topPipe.isVisible()) {
-                        topPipe.setRandomPosition(300, 600) // 如果不可见，重新设置位置
+                        topPipe.setPosition(screenWidth.toInt(), topY) // 如果不可见，重新设置位置
                     }
                     if (!bottomPipe.isVisible()) {
-                        bottomPipe.setRandomPosition(0, 300) // 如果不可见，重新设置位置
+                        bottomPipe.setPosition(screenWidth.toInt(), bottomY) // 如果不可见，重新设置位置
                     }
                     delay(36L)  // 每 16 毫秒更新一次位置，大约相当于 60 帧每秒
                 }

@@ -8,18 +8,16 @@ import androidx.compose.ui.unit.Dp
 import com.caodong0225.flappybird.R
 import kotlin.random.Random
 
-class PipeModel(private val type: Int,
+class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for top pipe
                 private val screenHeight: Float,
-                private val screenWidth: Float
-    ) {
+                private val screenWidth: Float) {
 
     companion object {
         private val pipeImages = SnapshotStateList<Int>().apply {
-            add(R.drawable.pipe) // 使用 pipe 图片资源
-            add(R.drawable.pipe_top) // 顶部管道图片资源
+            add(R.drawable.pipe)       // 普通管道图片资源
+            add(R.drawable.pipe_top)   // 顶部管道图片资源
             add(R.drawable.pipe_bottom) // 底部管道图片资源
         }
-
     }
 
     // 管道的属性
@@ -29,12 +27,22 @@ class PipeModel(private val type: Int,
     var visible: Boolean = true
 
     // 当前管道图片资源 ID
-    var pipeImageResId by mutableStateOf(pipeImages[type])
+    var pipeImageResId by mutableStateOf(if (type == 1) pipeImages[2] else pipeImages[0]) // 0 for top pipe, 2 for bottom pipe
+
+    // 管道列表用于填充
+    val filledPipes = mutableListOf<PipeModel>()
 
     // 设置管道的初始位置
     fun setPosition(x: Int, y: Int) {
         this.x = x
         this.y = y
+        if (type == 0) { // 如果是顶部管道
+            fillWithPipes(y, -1)
+        }
+        else if(type == 2)
+        {
+            fillWithPipes(y, 1)
+        }
     }
 
     // 绘制管道（返回图片资源ID）
@@ -43,11 +51,15 @@ class PipeModel(private val type: Int,
         return pipeImageResId // 返回当前的图片资源 ID
     }
 
-    // 随机设置管道的初始位置
-    fun setRandomPosition(down: Int, up: Int) {
-        x = screenWidth.toInt() // 初始位置从右侧屏幕外开始
-        // 随机生成 Y 坐标（根据需要设置随机范围）
-        y = Random.nextInt(down, up)
+
+    // 填充普通管道
+    private fun fillWithPipes(topY: Int, direction: Int) {
+        val gap = 30 // 设定管道之间的空隙
+        for (i in 0 until 20) { // 填充三个普通管道
+            val pipe = PipeModel(1, screenHeight, screenWidth) // 创建普通管道实例
+            pipe.setPosition(screenWidth.toInt(), topY + direction * gap * (i + 1)) // 设置位置
+            filledPipes.add(pipe) // 添加到填充管道列表
+        }
     }
 
     // 管道的运动逻辑
@@ -55,10 +67,12 @@ class PipeModel(private val type: Int,
         x -= speed
         if (x < -120) { // 水管完全离开窗口
             visible = false
-        }else
-        {
+        } else {
             visible = true
         }
+
+        // 更新填充管道的位置
+        filledPipes.forEach { it.movement() }
     }
 
     // 判断管道是否可见
