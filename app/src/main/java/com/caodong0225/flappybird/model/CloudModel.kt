@@ -19,7 +19,7 @@ class CloudModel{
     // 云朵的属性
     var x: Int = 0
     var y: Int = 0
-    var speed: Int = 2 // 云朵移动速度
+    var speed: Int = 7 // 云朵移动速度
     var visible: Boolean = true
     // 计数器用于控制云朵图片的变化
     private var imageChangeCounter = 0

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -17,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -24,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.caodong0225.flappybird.model.BackgroundModel
 import com.caodong0225.flappybird.model.BirdModel
 import com.caodong0225.flappybird.model.CloudModel
 import com.caodong0225.flappybird.model.PipeModel
@@ -32,6 +35,7 @@ import com.caodong0225.flappybird.util.ScreenUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +68,9 @@ fun BirdGame(modifier: Modifier = Modifier) {
     }
 
     // 创建 BirdModel 实例来控制小鸟的状态
-    val birdModel = remember { BirdModel(screenHeight - birdSizePx) }
+    val birdModel = remember { BirdModel(screenHeight - birdSizePx / 2) }
+
+    val backgroundModel = remember { BackgroundModel() }
 
     val topPipe = remember { PipeModel(0, screenHeight, screenWidth) } // 创建顶部管道
     val bottomPipe = remember { PipeModel(2, screenHeight, screenWidth) } // 创建底部管道
@@ -95,6 +101,27 @@ fun BirdGame(modifier: Modifier = Modifier) {
                 }
             }
     ) {
+        // 绘制背景图片
+        // 绘制第一张背景图片
+        Image(
+            painter = painterResource(id = backgroundModel.backgroundImageResId1),
+            contentDescription = "Background 1",
+            modifier = Modifier
+                .offset(x = backgroundModel.x1.dp)
+                .fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        // 绘制第二张背景图片
+        Image(
+            painter = painterResource(id = backgroundModel.backgroundImageResId2),
+            contentDescription = "Background 2",
+            modifier = Modifier
+                .offset(x = backgroundModel.x2.dp)
+                .fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
         // 绘制云朵
         Image(
             painter = painterResource(id = cloudModel.cloudImageResId), // 获取云朵的图片资源
@@ -145,6 +172,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
             )
         }
 
+
         // 使用协程不断更新小鸟的位置
         LaunchedEffect(Unit) {
             coroutineScope.launch {
@@ -152,7 +180,8 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     birdModel.updatePosition()  // 更新位置
                     topPipe.movement() // 更新顶部管道位置
                     bottomPipe.movement() // 更新底部管道位置
-                    cloudModel.movement()
+                    cloudModel.movement() // 更新云朵位置
+                    backgroundModel.movement(screenWidth.toInt()) // 更新背景图片的位置
 
                     val topY = Random.nextInt(20, 400)
 
@@ -166,8 +195,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     if (!bottomPipe.isVisible()) {
                         bottomPipe.setPosition(screenWidth.toInt(), bottomY) // 如果不可见，重新设置位置
                     }
-                    if(!cloudModel.isVisible())
-                    {
+                    if (!cloudModel.isVisible()) {
                         cloudModel.setPosition(screenWidth.toInt(), cloudY)
                     }
                     delay(36L)  // 每 16 毫秒更新一次位置，大约相当于 60 帧每秒
