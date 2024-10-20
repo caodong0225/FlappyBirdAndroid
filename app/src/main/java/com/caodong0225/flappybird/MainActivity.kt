@@ -72,8 +72,9 @@ fun BirdGame(modifier: Modifier = Modifier) {
 
     val backgroundModel = remember { BackgroundModel() }
 
-    val topPipe = remember { PipeModel(0, screenHeight, screenWidth) } // 创建顶部管道
-    val bottomPipe = remember { PipeModel(2, screenHeight, screenWidth) } // 创建底部管道
+    // 管道列表用于填充
+    val pipes = remember { mutableListOf<PipeModel>() }
+
 
     val cloudModel = remember {
         CloudModel()
@@ -144,32 +145,28 @@ fun BirdGame(modifier: Modifier = Modifier) {
         )
 
         // 绘制管道
-        Image(
-            painter = painterResource(id = R.drawable.pipe_top), // 获取顶部管道的图片资源
-            contentDescription = "Top Pipe",
-            modifier = Modifier
-                .offset(x = topPipe.x.dp, y = topPipe.y.dp) // 根据管道的坐标更新位置
-                .size(pipeWidth, pipeHeight)
-        )
-
-        Image(
-            painter = painterResource(id = R.drawable.pipe_bottom), // 获取底部管道的图片资源
-            contentDescription = "Bottom Pipe",
-            modifier = Modifier
-                .offset(x = bottomPipe.x.dp, y = bottomPipe.y.dp) // 根据管道的坐标更新位置
-                .size(pipeWidth, pipeHeight)
-        )
-
-        // 绘制中间管道
-        val filledPipes = topPipe.filledPipes.plus(bottomPipe.filledPipes)
-        for (filledPipe in filledPipes) {
+        for (pipe in pipes) {
             Image(
-                painter = painterResource(id = R.drawable.pipe), // 中间管道使用普通的管道图片
-                contentDescription = "Middle Pipe",
+                painter = painterResource(id = pipe.pipeImageResId), // 获取管道的图片资源
+                contentDescription = "Pipe",
                 modifier = Modifier
-                    .offset(x = filledPipe.x.dp, y = filledPipe.y.dp)
-                    .size(pipeWidth, pipeHeight) // 根据需要设置中间管道的高度
+                    .offset(x = pipe.x.dp, y = pipe.y.dp)
+                    .size(pipeWidth, pipeHeight)
             )
+        }
+
+        for (pipe in pipes) {
+            // 绘制中间管道
+            val filledPipes = pipe.filledPipes
+            for (filledPipe in filledPipes) {
+                Image(
+                    painter = painterResource(id = R.drawable.pipe), // 中间管道使用普通的管道图片
+                    contentDescription = "Middle Pipe",
+                    modifier = Modifier
+                        .offset(x = filledPipe.x.dp, y = filledPipe.y.dp)
+                        .size(pipeWidth, pipeHeight) // 根据需要设置中间管道的高度
+                )
+            }
         }
 
 
@@ -178,22 +175,53 @@ fun BirdGame(modifier: Modifier = Modifier) {
             coroutineScope.launch {
                 while (true) {
                     birdModel.updatePosition()  // 更新位置
-                    topPipe.movement() // 更新顶部管道位置
-                    bottomPipe.movement() // 更新底部管道位置
+                    // 遍历管道列表，更新每个管道的位置
+                    pipes.forEach { pipe ->
+                        pipe.movement()
+                    }
                     cloudModel.movement() // 更新云朵位置
                     backgroundModel.movement(screenWidth.toInt()) // 更新背景图片的位置
 
-                    val topY = Random.nextInt(20, 400)
-
-                    val bottomY = topY + Random.nextInt(200, 260)
-
                     val cloudY = Random.nextInt(100, 200)
                     // 确保管道的可见性
-                    if (!topPipe.isVisible()) {
-                        topPipe.setPosition(screenWidth.toInt(), topY) // 如果不可见，重新设置位置
+                    // 检查每个管道的可见性并处理不可见的管道
+                    val iterator = pipes.iterator()
+                    while (iterator.hasNext()) {
+                        val pipe = iterator.next()
+                        if (!pipe.isVisible()) {
+                            iterator.remove() // 删除不可见的管道
+                        }
                     }
-                    if (!bottomPipe.isVisible()) {
-                        bottomPipe.setPosition(screenWidth.toInt(), bottomY) // 如果不可见，重新设置位置
+                    // 如果列表中已经没有管道了，则添加新的管道
+                    if (pipes.size in 1..2) {
+                        if(pipes[0].x< screenWidth/2)
+                        {
+                            // 生成随机的Y坐标
+                            val topY = Random.nextInt(20, 400)
+                            val bottomY = topY + Random.nextInt(200, 260)
+
+                            // 新建一对新的管道并加入列表
+                            pipes.add(PipeModel(0, screenHeight, screenWidth).apply {
+                                setPosition(screenWidth.toInt(), topY)
+                            })
+                            pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
+                                setPosition(screenWidth.toInt(), bottomY)
+                            })
+                        }
+                    }
+                    else if(pipes.size < 2)
+                    {
+                        // 生成随机的Y坐标
+                        val topY = Random.nextInt(20, 400)
+                        val bottomY = topY + Random.nextInt(200, 260)
+
+                        // 新建一对新的管道并加入列表
+                        pipes.add(PipeModel(0, screenHeight, screenWidth).apply {
+                            setPosition(screenWidth.toInt(), topY)
+                        })
+                        pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
+                            setPosition(screenWidth.toInt(), bottomY)
+                        })
                     }
                     if (!cloudModel.isVisible()) {
                         cloudModel.setPosition(screenWidth.toInt(), cloudY)

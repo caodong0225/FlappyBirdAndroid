@@ -37,11 +37,11 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
         this.x = x
         this.y = y
         if (type == 0) { // 如果是顶部管道
-            fillWithPipes(y, -1)
+            fillWithPipes(x, y, -1)
         }
         else if(type == 2)
         {
-            fillWithPipes(y, 1)
+            fillWithPipes(x, y, 1)
         }
     }
 
@@ -53,11 +53,11 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
 
 
     // 填充普通管道
-    private fun fillWithPipes(topY: Int, direction: Int) {
+    private fun fillWithPipes(x:Int, topY: Int, direction: Int) {
         val gap = 30 // 设定管道之间的空隙
         for (i in 0 until 20) { // 填充三个普通管道
             val pipe = PipeModel(1, screenHeight, screenWidth) // 创建普通管道实例
-            pipe.setPosition(screenWidth.toInt(), topY + direction * gap * (i + 1)) // 设置位置
+            pipe.setPosition(x, topY + direction * gap * (i + 1)) // 设置位置
             filledPipes.add(pipe) // 添加到填充管道列表
         }
     }
@@ -65,11 +65,8 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
     // 管道的运动逻辑
     fun movement() {
         x -= speed
-        if (x < -120) { // 水管完全离开窗口
-            visible = false
-        } else {
-            visible = true
-        }
+        visible = // 水管完全离开窗口
+            x >= -120
 
         // 更新填充管道的位置
         filledPipes.forEach { it.movement() }
