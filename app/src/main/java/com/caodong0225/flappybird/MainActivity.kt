@@ -1,5 +1,6 @@
 package com.caodong0225.flappybird
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +33,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "bird_game") {
                         composable("bird_game") {
-                            BirdGame(navController)
+                            BirdGame()
                         }
                         composable("menu") {
                             MapScreen() // 新视图
@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BirdGame(navController: NavController, modifier: Modifier = Modifier) {
+fun BirdGame(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val screenHeight = ScreenUtils.getScreenHeightDp(context)
     val screenWidth = ScreenUtils.getScreenWidthDp(context)
@@ -252,11 +252,14 @@ fun BirdGame(navController: NavController, modifier: Modifier = Modifier) {
         modifier = Modifier.fillMaxSize()
     ) {
         IconButton(
-            onClick = { navController.navigate("menu")  },
+            onClick = {
+                val intent = Intent(context, MapScreen::class.java)
+                context.startActivity(intent)
+            },
             modifier = Modifier
-                .size(60.dp)  // IconButton的尺寸
-                .padding(16.dp)  // 边距
-                .align(Alignment.TopStart)  // 置于左上角
+                .size(60.dp)
+                .padding(16.dp)
+                .align(Alignment.TopStart)
         ) {
             Icon(Icons.Filled.Menu, contentDescription = "Menu")
         }
@@ -298,6 +301,6 @@ fun BirdGame(navController: NavController, modifier: Modifier = Modifier) {
 @Composable
 fun BirdGamePreview() {
     FlappyBirdTheme {
-        BirdGame(navController = rememberNavController())
+        BirdGame()
     }
 }
