@@ -8,7 +8,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -27,12 +32,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.caodong0225.flappybird.model.BackgroundModel
 import com.caodong0225.flappybird.model.BirdModel
 import com.caodong0225.flappybird.model.CloudModel
 import com.caodong0225.flappybird.model.PipeModel
 import com.caodong0225.flappybird.ui.theme.FlappyBirdTheme
 import com.caodong0225.flappybird.util.ScreenUtils
+import com.caodong0225.flappybird.view.MapScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -41,13 +51,23 @@ import kotlin.random.Random
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             FlappyBirdTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    BirdGame()
+                    // 设置导航
+                    val navController = rememberNavController()
+                    NavHost(navController = navController, startDestination = "bird_game") {
+                        composable("bird_game") {
+                            BirdGame(navController)
+                        }
+                        composable("menu") {
+                            MapScreen() // 新视图
+                        }
+                    }
                 }
             }
         }
@@ -56,7 +76,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BirdGame(modifier: Modifier = Modifier) {
+fun BirdGame(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val screenHeight = ScreenUtils.getScreenHeightDp(context)
     val screenWidth = ScreenUtils.getScreenWidthDp(context)
@@ -139,6 +159,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
             }
         }
     }
+
     // 触摸事件控制小鸟的上升与下降
     Box(
         modifier = modifier
@@ -226,6 +247,20 @@ fun BirdGame(modifier: Modifier = Modifier) {
             }
         }
     }
+    // 放置独立的IconButton
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        IconButton(
+            onClick = { navController.navigate("menu")  },
+            modifier = Modifier
+                .size(60.dp)  // IconButton的尺寸
+                .padding(16.dp)  // 边距
+                .align(Alignment.TopStart)  // 置于左上角
+        ) {
+            Icon(Icons.Filled.Menu, contentDescription = "Menu")
+        }
+    }
 
     // 游戏启动时调用
     LaunchedEffect(Unit) {
@@ -263,6 +298,6 @@ fun BirdGame(modifier: Modifier = Modifier) {
 @Composable
 fun BirdGamePreview() {
     FlappyBirdTheme {
-        BirdGame()
+        BirdGame(navController = rememberNavController())
     }
 }
