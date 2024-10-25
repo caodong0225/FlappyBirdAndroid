@@ -65,7 +65,13 @@ class PipeModel(private val type: Int, // type = 1 for bottom pipe, type = 0 for
     }
 
     fun checkCollision(birdBox: Rect, density: Density): Boolean {
-        val pipeBox = getBoundingBox( density)
+        filledPipes.forEach {
+            val pipeBox = it.getBoundingBox(density)
+            if (birdBox.overlaps(pipeBox)) {
+                return true
+            }
+        }
+        val pipeBox = getBoundingBox(density)
         return birdBox.overlaps(pipeBox)
     }
 
