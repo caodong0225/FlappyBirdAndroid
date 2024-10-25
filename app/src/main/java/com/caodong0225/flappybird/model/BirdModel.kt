@@ -22,7 +22,7 @@ class BirdModel(private val screenHeight: Float) {
     private var speed = 0f
 
     // 重力影响的加速度
-    private val gravity = 9.8f
+    private val gravity = 4.8f
 
     private val birdSizePx = 60
 
@@ -33,7 +33,7 @@ class BirdModel(private val screenHeight: Float) {
     // 更新小鸟的状态：上升
     fun startFlying() {
         isFlying = true
-        speed = -20f  // 初始上升速度
+        speed = -12f  // 初始上升速度
     }
 
     // 更新小鸟的状态：停止上升（下落）
