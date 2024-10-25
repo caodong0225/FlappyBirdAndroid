@@ -47,7 +47,7 @@ class BirdModel(private val screenHeight: Float) {
     }
 
     fun getBoundingBox(): Rect {
-        val birdX = 0f // The X position of the bird; this should match your UI layout
+        val birdX = 40f // The X position of the bird; this should match your UI layout
         return Rect(birdX, positionY, birdX + birdSizePx, positionY + birdSizePx)
     }
 

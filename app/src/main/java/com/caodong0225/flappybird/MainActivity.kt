@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -85,6 +88,8 @@ fun BirdGame(modifier: Modifier = Modifier) {
     val pipeWidth = 80.dp
     val pipeHeight = 100.dp
     val density = LocalDensity.current
+    val birdXPos = 40.dp
+    var isAdded = true // 判断小鸟的本次管道分数是否已经添加
     with(density) {
         birdSizePx = birdSize.toPx()  // 将 dp 转换为像素 float 值
     }
@@ -105,6 +110,8 @@ fun BirdGame(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
 
     var isGameOver = remember { mutableStateOf(false) }
+
+    var gameScore = remember { mutableStateOf(0) }
 
 
     fun startGameLoop() {
@@ -148,6 +155,13 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     pipes.add(PipeModel(2, screenHeight, screenWidth).apply {
                         setPosition(screenWidth.toInt(), bottomY)
                     })
+                    isAdded = false
+                }
+
+                if(pipes[0].x < 40 && !isAdded )
+                {
+                    gameScore.value += 1
+                    isAdded = true
                 }
 
                 if (!cloudModel.isVisible()) {
@@ -180,6 +194,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
                 }
             }
     ) {
+
         // 绘制背景图片
         // 绘制第一张背景图片
         Image(
@@ -218,7 +233,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(birdSize)  // 小鸟的大小
-                .offset(y = birdModel.positionY.dp)  // 根据 BirdModel 的位置更新
+                .offset(x = birdXPos,y = birdModel.positionY.dp)  // 根据 BirdModel 的位置更新
                 .rotate(birdModel.rotationAngle)  // 旋转小鸟
         )
 
@@ -246,6 +261,17 @@ fun BirdGame(modifier: Modifier = Modifier) {
                 )
             }
         }
+
+        // 显示游戏分数的文本框
+        Text(
+            text = "Score: ${gameScore.value}",  // 使用当前分数值
+            fontSize = 32.sp,  // 设置字体大小
+            color = Color.White,  // 设置文本颜色
+            modifier = Modifier
+                .align(Alignment.TopCenter)  // 水平居中，垂直靠顶部
+                .padding(top = 50.dp)  // 设置偏上距离
+        )
+
     }
     // 放置独立的IconButton
     Box(
@@ -280,7 +306,7 @@ fun BirdGame(modifier: Modifier = Modifier) {
                     isGameOver.value = false
                     birdModel.reset()  // 重置小鸟状态
                     pipes.clear()  // 清空管道
-
+                    gameScore.value = 0  // 重置分数
                     // 重新启动游戏循环
                     startGameLoop()
                 },
