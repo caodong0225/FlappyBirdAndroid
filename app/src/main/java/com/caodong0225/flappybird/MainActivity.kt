@@ -2,6 +2,7 @@ package com.caodong0225.flappybird
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -33,12 +34,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.amap.api.location.AMapLocationClient
+import com.amap.api.location.AMapLocationClientOption
 import com.caodong0225.flappybird.model.BackgroundModel
 import com.caodong0225.flappybird.model.BirdModel
 import com.caodong0225.flappybird.model.CloudModel
@@ -52,9 +54,18 @@ import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var locationClient: AMapLocationClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AMapLocationClient.updatePrivacyShow(this, true, true)
+        AMapLocationClient.updatePrivacyAgree(this, true)
+        locationClient = AMapLocationClient(this)
 
+        locationClient.setLocationOption(getDefaultOption())
+        locationClient.setLocationListener {}
+        val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        println("androidId: $androidId")
+        locationClient.startLocation()
         setContent {
             FlappyBirdTheme {
                 Surface(
@@ -65,7 +76,7 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "bird_game") {
                         composable("bird_game") {
-                            BirdGame()
+                            BirdGame(locationClient)
                         }
                         composable("menu") {
                             MapScreen() // 新视图
@@ -75,11 +86,37 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    override fun onDestroy() {
+        locationClient.stopLocation()
+        locationClient.onDestroy()
+        super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        locationClient.disableBackgroundLocation(true)
+    }
+    private fun getDefaultOption(): AMapLocationClientOption {
+        val mOption = AMapLocationClientOption()
+        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy //可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+        mOption.isGpsFirst = true //可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+        mOption.httpTimeOut = 30000 //可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
+        mOption.interval = 2000 //可选，设置定位间隔。默认为2秒
+        mOption.isNeedAddress = true //可选，设置是否返回逆地理地址信息。默认是true
+        mOption.isOnceLocation = false //可选，设置是否单次定位。默认是false
+        mOption.isOnceLocationLatest = false //可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP) //可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
+        mOption.isSensorEnable = false //可选，设置是否使用传感器。默认是false
+        mOption.isWifiScan = true //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
+        mOption.isLocationCacheEnable = true //可选，设置是否使用缓存定位，默认为true
+        return mOption
+    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun BirdGame(modifier: Modifier = Modifier) {
+fun BirdGame(locationClient : AMapLocationClient,
+    modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val screenHeight = ScreenUtils.getScreenHeightDp(context)
     val screenWidth = ScreenUtils.getScreenWidthDp(context)
@@ -298,6 +335,9 @@ fun BirdGame(modifier: Modifier = Modifier) {
 
     // 当游戏结束时显示 "Game Over" 并允许点击重新启动游戏
     if (isGameOver.value) {
+        val currentLocation = locationClient.lastKnownLocation;
+        println("currentLocation: ${currentLocation.toStr()}")
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -320,13 +360,4 @@ fun BirdGame(modifier: Modifier = Modifier) {
         }
     }
 
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun BirdGamePreview() {
-    FlappyBirdTheme {
-        BirdGame()
-    }
 }
