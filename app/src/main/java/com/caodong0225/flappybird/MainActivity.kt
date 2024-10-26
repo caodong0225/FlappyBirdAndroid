@@ -128,7 +128,7 @@ fun BirdGame(locationClient : AMapLocationClient,
     val density = LocalDensity.current
     val birdXPos = 40.dp
     var isAdded = true // 判断小鸟的本次管道分数是否已经添加
-    var startTime = System.currentTimeMillis()
+    var startTime = remember { mutableStateOf(System.currentTimeMillis()) }
     with(density) {
         birdSizePx = birdSize.toPx()  // 将 dp 转换为像素 float 值
     }
@@ -345,10 +345,11 @@ fun BirdGame(locationClient : AMapLocationClient,
         val location = currentLocation.address
         val score = gameScore.value
         val appId = androidId
+        val currentTime = System.currentTimeMillis()
 
         val dbHelper = GameRepository(context)
-        val gameRecord = GameRecord(appId, score, System.currentTimeMillis(),
-            location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime, "")
+        val gameRecord = GameRecord(appId, score, currentTime,
+            location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime.value, "")
         dbHelper.insertGameRecord(gameRecord)
         Box(
             modifier = Modifier
@@ -359,7 +360,7 @@ fun BirdGame(locationClient : AMapLocationClient,
                     birdModel.reset()  // 重置小鸟状态
                     pipes.clear()  // 清空管道
                     gameScore.value = 0  // 重置分数
-                    startTime = System.currentTimeMillis() // 重置开始时间
+                    startTime.value = System.currentTimeMillis() // 重置开始时间
                     // 重新启动游戏循环
                     startGameLoop()
                 },

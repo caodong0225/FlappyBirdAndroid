@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 class GameDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
-        const val DATABASE_NAME = "game.db"
+        const val DATABASE_NAME = "flappy_bird.db"
         const val DATABASE_VERSION = 1
         const val TABLE_NAME = "game_records"
         const val COLUMN_ID = "id"

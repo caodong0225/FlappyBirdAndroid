@@ -1,8 +1,10 @@
 package com.caodong0225.flappybird.view
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,11 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import com.caodong0225.flappybird.model.GameRecordViewModel
 import com.caodong0225.flappybird.record.GameRecord
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 class History : ComponentActivity() {
     private lateinit var viewModel: GameRecordViewModel
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 初始化 ViewModel
@@ -34,6 +41,7 @@ class History : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HistoryScreen(viewModel: GameRecordViewModel) {
     // 获取游戏记录数据
@@ -66,6 +74,7 @@ fun HistoryScreen(viewModel: GameRecordViewModel) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun GameRecordItem(record: GameRecord) {
     Column(
@@ -74,12 +83,24 @@ fun GameRecordItem(record: GameRecord) {
             .padding(8.dp)
     ) {
         Text(text = "分数: ${record.score}")
-        Text(text = "游玩时间: ${record.timestamp}")
+
+        // 将时间戳转换为东八区时间
+        val localDateTime = convertTimestampToLocalDateTime(record.timestamp)
+        Text(text = "游玩时间: ${localDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}")
+
         Text(text = "位置: ${record.location}")
         Text(text = "纬度: ${record.latitude}")
         Text(text = "精度: ${record.longitude}")
-        Text(text = "游玩时长: ${record.duration}")
+        Text(text = "游玩时长: ${record.duration/1000}秒")
         Text(text = "说明: ${record.remark}")
         Divider(modifier = Modifier.padding(vertical = 8.dp))
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun convertTimestampToLocalDateTime(timestamp: Long): LocalDateTime {
+    // 将时间戳转换为 Instant
+    val instant = Instant.ofEpochSecond(timestamp/1000)
+    // 转换为东八区时间
+    return LocalDateTime.ofInstant(instant, ZoneId.of("Asia/Shanghai"))
 }
