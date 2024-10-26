@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".view.MapScreen"
+            android:name=".view.History"
             android:exported="true"
             android:label="MapScreen"
             android:theme="@style/Theme.FlappyBird">

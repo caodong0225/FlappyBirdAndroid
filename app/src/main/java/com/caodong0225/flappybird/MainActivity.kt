@@ -41,13 +41,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
+import com.caodong0225.flappybird.Repository.GameRepository
 import com.caodong0225.flappybird.model.BackgroundModel
 import com.caodong0225.flappybird.model.BirdModel
 import com.caodong0225.flappybird.model.CloudModel
 import com.caodong0225.flappybird.model.PipeModel
+import com.caodong0225.flappybird.record.GameRecord
 import com.caodong0225.flappybird.ui.theme.FlappyBirdTheme
 import com.caodong0225.flappybird.util.ScreenUtils
-import com.caodong0225.flappybird.view.MapScreen
+import com.caodong0225.flappybird.view.History
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -60,11 +62,9 @@ class MainActivity : ComponentActivity() {
         AMapLocationClient.updatePrivacyShow(this, true, true)
         AMapLocationClient.updatePrivacyAgree(this, true)
         locationClient = AMapLocationClient(this)
-
         locationClient.setLocationOption(getDefaultOption())
         locationClient.setLocationListener {}
         val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        println("androidId: $androidId")
         locationClient.startLocation()
         setContent {
             FlappyBirdTheme {
@@ -76,10 +76,10 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "bird_game") {
                         composable("bird_game") {
-                            BirdGame(locationClient)
+                            BirdGame(locationClient, androidId)
                         }
                         composable("menu") {
-                            MapScreen() // 新视图
+                            History() // 新视图
                         }
                     }
                 }
@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun BirdGame(locationClient : AMapLocationClient,
+             androidId : String,
     modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val screenHeight = ScreenUtils.getScreenHeightDp(context)
@@ -127,6 +128,7 @@ fun BirdGame(locationClient : AMapLocationClient,
     val density = LocalDensity.current
     val birdXPos = 40.dp
     var isAdded = true // 判断小鸟的本次管道分数是否已经添加
+    var startTime = System.currentTimeMillis()
     with(density) {
         birdSizePx = birdSize.toPx()  // 将 dp 转换为像素 float 值
     }
@@ -316,7 +318,7 @@ fun BirdGame(locationClient : AMapLocationClient,
     ) {
         IconButton(
             onClick = {
-                val intent = Intent(context, MapScreen::class.java)
+                val intent = Intent(context, History::class.java)
                 context.startActivity(intent)
             },
             modifier = Modifier
@@ -333,11 +335,21 @@ fun BirdGame(locationClient : AMapLocationClient,
         startGameLoop()  // 启动游戏循环
     }
 
+
     // 当游戏结束时显示 "Game Over" 并允许点击重新启动游戏
     if (isGameOver.value) {
         val currentLocation = locationClient.lastKnownLocation;
-        println("currentLocation: ${currentLocation.toStr()}")
+        // println("currentLocation: ${currentLocation.toStr()}")
+        val longitude = currentLocation.longitude
+        val latitude = currentLocation.latitude
+        val location = currentLocation.address
+        val score = gameScore.value
+        val appId = androidId
 
+        val dbHelper = GameRepository(context)
+        val gameRecord = GameRecord(appId, score, System.currentTimeMillis(),
+            location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime, "")
+        dbHelper.insertGameRecord(gameRecord)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -347,6 +359,7 @@ fun BirdGame(locationClient : AMapLocationClient,
                     birdModel.reset()  // 重置小鸟状态
                     pipes.clear()  // 清空管道
                     gameScore.value = 0  // 重置分数
+                    startTime = System.currentTimeMillis() // 重置开始时间
                     // 重新启动游戏循环
                     startGameLoop()
                 },
