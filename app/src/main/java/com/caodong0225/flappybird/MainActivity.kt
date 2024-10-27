@@ -1,10 +1,13 @@
 package com.caodong0225.flappybird
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -36,6 +39,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -54,19 +58,39 @@ import com.caodong0225.flappybird.view.History
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.random.Random
-
+import android.Manifest
 
 class MainActivity : ComponentActivity() {
     private lateinit var locationClient: AMapLocationClient
+
+    private val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+            // 权限被授予，可以开始定位
+            startLocation()
+        } else {
+            // 权限被拒绝，提示用户并退出游戏
+            Toast.makeText(this, "需要定位权限才能玩游戏，应用将退出", Toast.LENGTH_LONG).show()
+            finish() // 退出应用
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 请求定位权限
+        requestLocationPermissions()
+
+        // 其他初始化代码...
         AMapLocationClient.updatePrivacyShow(this, true, true)
         AMapLocationClient.updatePrivacyAgree(this, true)
         locationClient = AMapLocationClient(this)
         locationClient.setLocationOption(getDefaultOption())
         locationClient.setLocationListener {}
+
         val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        locationClient.startLocation()
         setContent {
             FlappyBirdTheme {
                 Surface(
@@ -79,10 +103,10 @@ class MainActivity : ComponentActivity() {
                         composable("start_screen") {
                             StartScreen(
                                 onStartGame = {
-                                    navController.navigate("bird_game") // 点击开始游戏按钮后导航到游戏界面
+                                    navController.navigate("bird_game")
                                 },
                                 onShowMenu = {
-                                    navController.navigate("menu") // 点击菜单按钮后导航到历史记录界面
+                                    navController.navigate("menu")
                                 }
                             )
                         }
@@ -90,13 +114,34 @@ class MainActivity : ComponentActivity() {
                             BirdGame(locationClient, androidId)
                         }
                         composable("menu") {
-                            History() // 新视图
+                            History()
                         }
                     }
                 }
             }
         }
     }
+
+    private fun requestLocationPermissions() {
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
+                // 权限已被授予
+                startLocation()
+            }
+            else -> {
+                // 请求权限
+                locationPermissionRequest.launch(arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ))
+            }
+        }
+    }
+
+    private fun startLocation() {
+        locationClient.startLocation()
+    }
+
     override fun onDestroy() {
         locationClient.stopLocation()
         locationClient.onDestroy()
@@ -107,19 +152,19 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         locationClient.disableBackgroundLocation(true)
     }
+
     private fun getDefaultOption(): AMapLocationClientOption {
         val mOption = AMapLocationClientOption()
-        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy //可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
-        mOption.isGpsFirst = true //可选，设置是否gps优先，只在高精度模式下有效。默认关闭
-        mOption.httpTimeOut = 30000 //可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
-        mOption.interval = 2000 //可选，设置定位间隔。默认为2秒
-        mOption.isNeedAddress = true //可选，设置是否返回逆地理地址信息。默认是true
-        mOption.isOnceLocation = false //可选，设置是否单次定位。默认是false
-        mOption.isOnceLocationLatest = false //可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
-        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP) //可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
-        mOption.isSensorEnable = false //可选，设置是否使用传感器。默认是false
-        mOption.isWifiScan = true //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
-        mOption.isLocationCacheEnable = true //可选，设置是否使用缓存定位，默认为true
+        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        mOption.isGpsFirst = true
+        mOption.httpTimeOut = 30000
+        mOption.interval = 2000
+        mOption.isNeedAddress = true
+        mOption.isOnceLocation = false
+        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP)
+        mOption.isSensorEnable = false
+        mOption.isWifiScan = true
+        mOption.isLocationCacheEnable = true
         return mOption
     }
 }
