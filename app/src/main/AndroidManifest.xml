@@ -17,7 +17,7 @@
         android:enableOnBackInvokedCallback="true"> <!-- 启用 OnBackInvokedCallback -->>
         <meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="950c8a2de604aa291f0dc909f30cb9ae"/>
+            android:value=""/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
