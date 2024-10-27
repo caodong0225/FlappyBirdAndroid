@@ -75,7 +75,17 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // 设置导航
                     val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = "bird_game") {
+                    NavHost(navController = navController, startDestination = "start_screen") {
+                        composable("start_screen") {
+                            StartScreen(
+                                onStartGame = {
+                                    navController.navigate("bird_game") // 点击开始游戏按钮后导航到游戏界面
+                                },
+                                onShowMenu = {
+                                    navController.navigate("menu") // 点击菜单按钮后导航到历史记录界面
+                                }
+                            )
+                        }
                         composable("bird_game") {
                             BirdGame(locationClient, androidId)
                         }
@@ -111,6 +121,49 @@ class MainActivity : ComponentActivity() {
         mOption.isWifiScan = true //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
         mOption.isLocationCacheEnable = true //可选，设置是否使用缓存定位，默认为true
         return mOption
+    }
+}
+
+@Composable
+fun StartScreen(onStartGame: () -> Unit, onShowMenu: () -> Unit) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        // 放置背景图片
+        Image(
+            painter = painterResource(id = R.drawable.background), // 替换为你的背景图片
+            contentDescription = "Background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        // 游戏开始按钮
+        Image(
+            painter = painterResource(id = R.drawable.start), // 替换为你的开始按钮图片
+            contentDescription = "Start Game",
+            modifier = Modifier
+                .clickable(onClick = onStartGame)
+                .size(200.dp)
+        )
+
+        // 菜单按钮
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            IconButton(
+                onClick = {
+                    val intent = Intent(context, History::class.java)
+                    context.startActivity(intent)
+                },
+                modifier = Modifier
+                    .size(60.dp)
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+            }
+        }
     }
 }
 
@@ -311,28 +364,11 @@ fun BirdGame(locationClient : AMapLocationClient,
                 .align(Alignment.TopCenter)  // 水平居中，垂直靠顶部
                 .padding(top = 50.dp)  // 设置偏上距离
         )
-
-    }
-    // 放置独立的IconButton
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        IconButton(
-            onClick = {
-                val intent = Intent(context, History::class.java)
-                context.startActivity(intent)
-            },
-            modifier = Modifier
-                .size(60.dp)
-                .padding(16.dp)
-                .align(Alignment.TopStart)
-        ) {
-            Icon(Icons.Filled.Menu, contentDescription = "Menu")
-        }
     }
 
     // 游戏启动时调用
     LaunchedEffect(Unit) {
+        // 防止开始启动按钮
         startGameLoop()  // 启动游戏循环
     }
 
@@ -359,12 +395,12 @@ fun BirdGame(locationClient : AMapLocationClient,
                 .clickable {
                     // 点击后重新开始游戏
                     isGameOver.value = false
-                    birdModel.reset()  // 重置小鸟状态
+                    val intent = Intent(context, MainActivity::class.java)
+                    context.startActivity(intent)
+                    birdModel.setInvisible()  // 重置小鸟状态
                     pipes.clear()  // 清空管道
                     gameScore.value = 0  // 重置分数
                     startTime.value = System.currentTimeMillis() // 重置开始时间
-                    // 重新启动游戏循环
-                    startGameLoop()
                 },
             contentAlignment = Alignment.Center
         ) {

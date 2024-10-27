@@ -25,6 +25,12 @@ class GameRepository(context: Context) {
         db.close()
     }
 
+    fun deleteGameRecord(timestamp: Long) {
+        val db = dbHelper.writableDatabase
+        db.delete(GameDatabaseHelper.TABLE_NAME, "${GameDatabaseHelper.COLUMN_TIMESTAMP} = ?", arrayOf(timestamp.toString()))
+        db.close()
+    }
+
     fun getAllGameRecords(): List<GameRecord> {
         val db = dbHelper.readableDatabase
         val gameRecords = mutableListOf<GameRecord>()
@@ -36,7 +42,7 @@ class GameRepository(context: Context) {
             null,
             null,
             null,
-            null
+            "${GameDatabaseHelper.COLUMN_TIMESTAMP} DESC" // 按时间戳降序排序
         )
 
         if (cursor.moveToFirst()) {

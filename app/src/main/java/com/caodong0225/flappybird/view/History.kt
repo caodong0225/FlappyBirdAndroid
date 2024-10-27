@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,8 +47,7 @@ class History : ComponentActivity() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HistoryScreen(viewModel: GameRecordViewModel) {
-    // 获取游戏记录数据
-    val gameRecords = viewModel.getAllGameRecords()
+    val gameRecords by viewModel.gameRecords.collectAsState()
 
     Column(
         modifier = Modifier
@@ -59,7 +61,6 @@ fun HistoryScreen(viewModel: GameRecordViewModel) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // 使用 LazyColumn 显示游戏记录
         if (gameRecords.isEmpty()) {
             Text(text = "暂无记录")
         } else {
@@ -67,7 +68,7 @@ fun HistoryScreen(viewModel: GameRecordViewModel) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(gameRecords) { record ->
-                    GameRecordItem(record)
+                    GameRecordItem(record, viewModel)
                 }
             }
         }
@@ -76,7 +77,9 @@ fun HistoryScreen(viewModel: GameRecordViewModel) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun GameRecordItem(record: GameRecord) {
+fun GameRecordItem(record: GameRecord,
+                   viewModel: GameRecordViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -91,8 +94,16 @@ fun GameRecordItem(record: GameRecord) {
         Text(text = "位置: ${record.location}")
         Text(text = "纬度: ${record.latitude}")
         Text(text = "精度: ${record.longitude}")
-        Text(text = "游玩时长: ${record.duration/1000}秒")
+        Text(text = "游玩时长: ${record.duration / 1000}秒")
         Text(text = "说明: ${record.remark}")
+
+        Button(onClick = {
+            // 调用删除函数
+            viewModel.deleteGameRecord(record.timestamp)
+        }) {
+            Text(text = "删除")
+        }
+
         Divider(modifier = Modifier.padding(vertical = 8.dp))
     }
 }
