@@ -42,6 +42,7 @@ import androidx.navigation.compose.rememberNavController
 import com.amap.api.location.AMapLocationClient
 import com.amap.api.location.AMapLocationClientOption
 import com.caodong0225.flappybird.Repository.GameRepository
+import com.caodong0225.flappybird.gameData.uploadGameRecord
 import com.caodong0225.flappybird.model.BackgroundModel
 import com.caodong0225.flappybird.model.BirdModel
 import com.caodong0225.flappybird.model.CloudModel
@@ -351,6 +352,7 @@ fun BirdGame(locationClient : AMapLocationClient,
         val gameRecord = GameRecord(appId, score, currentTime,
             location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime.value, "")
         dbHelper.insertGameRecord(gameRecord)
+        uploadGameRecord(gameRecord)
         Box(
             modifier = Modifier
                 .fillMaxSize()

@@ -67,6 +67,8 @@ dependencies {
         "dir" to "libs",
         "include" to listOf("*.jar")
     )))
+    implementation(libs.retrofit)
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

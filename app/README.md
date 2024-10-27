@@ -1,0 +1,1 @@
+首先要去高德地图官网申请开发者码，填入manifests/AndroidManifest.xml中的meta-data中的key值，然后就可以使用高德地图了。

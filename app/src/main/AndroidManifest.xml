@@ -12,11 +12,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlappyBird"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="tiramisu"
         android:enableOnBackInvokedCallback="true"> <!-- 启用 OnBackInvokedCallback -->>
         <meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value=""/>
+            android:value="950c8a2de604aa291f0dc909f30cb9ae"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -40,6 +41,7 @@
             </intent-filter>
         </activity>
     </application>
+
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
