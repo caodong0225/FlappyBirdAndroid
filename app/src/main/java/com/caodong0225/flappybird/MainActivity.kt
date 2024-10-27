@@ -421,19 +421,26 @@ fun BirdGame(locationClient : AMapLocationClient,
     // 当游戏结束时显示 "Game Over" 并允许点击重新启动游戏
     if (isGameOver.value) {
         val currentLocation = locationClient.lastKnownLocation;
-        // println("currentLocation: ${currentLocation.toStr()}")
-        val longitude = currentLocation.longitude
-        val latitude = currentLocation.latitude
-        val location = currentLocation.address
-        val score = gameScore.value
-        val appId = androidId
-        val currentTime = System.currentTimeMillis()
+        println("currentLocation: ${currentLocation.toStr()}")
+        if(currentLocation == null) {
+            Toast.makeText(context, "定位失败，无法上传游戏记录", Toast.LENGTH_LONG).show()
+            return
+        }
+        else{
+            val longitude = currentLocation.longitude
+            val latitude = currentLocation.latitude
+            val location = currentLocation.address
+            val score = gameScore.value
+            val appId = androidId
+            val currentTime = System.currentTimeMillis()
 
-        val dbHelper = GameRepository(context)
-        val gameRecord = GameRecord(appId, score, currentTime,
-            location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime.value, "")
-        dbHelper.insertGameRecord(gameRecord)
-        uploadGameRecord(gameRecord)
+            val dbHelper = GameRepository(context)
+            val gameRecord = GameRecord(appId, score, currentTime,
+                location, latitude.toString(), longitude.toString(), System.currentTimeMillis() - startTime.value, "")
+            dbHelper.insertGameRecord(gameRecord)
+            uploadGameRecord(gameRecord)
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
