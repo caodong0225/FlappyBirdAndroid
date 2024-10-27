@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
             // 权限被授予，可以开始定位
-            startLocation()
+            // startLocation()
         } else {
             // 权限被拒绝，提示用户并退出游戏
             Toast.makeText(this, "需要定位权限才能玩游戏，应用将退出", Toast.LENGTH_LONG).show()
@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
                 // 权限已被授予
-                startLocation()
+                // startLocation()
             }
             else -> {
                 // 请求权限
@@ -136,10 +136,6 @@ class MainActivity : ComponentActivity() {
                 ))
             }
         }
-    }
-
-    private fun startLocation() {
-        locationClient.startLocation()
     }
 
     override fun onDestroy() {
@@ -155,7 +151,7 @@ class MainActivity : ComponentActivity() {
 
     private fun getDefaultOption(): AMapLocationClientOption {
         val mOption = AMapLocationClientOption()
-        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
         mOption.isGpsFirst = true
         mOption.httpTimeOut = 30000
         mOption.interval = 2000
@@ -421,10 +417,9 @@ fun BirdGame(locationClient : AMapLocationClient,
     // 当游戏结束时显示 "Game Over" 并允许点击重新启动游戏
     if (isGameOver.value) {
         val currentLocation = locationClient.lastKnownLocation;
-        println("currentLocation: ${currentLocation.toStr()}")
+        println("currentLocation: $currentLocation")
         if(currentLocation == null) {
             Toast.makeText(context, "定位失败，无法上传游戏记录", Toast.LENGTH_LONG).show()
-            return
         }
         else{
             val longitude = currentLocation.longitude
