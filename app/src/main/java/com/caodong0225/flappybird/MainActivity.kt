@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
         if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
             // 权限被授予，可以开始定位
-            // startLocation()
+            // locationClient.startLocation()
         } else {
             // 权限被拒绝，提示用户并退出游戏
             Toast.makeText(this, "需要定位权限才能玩游戏，应用将退出", Toast.LENGTH_LONG).show()
@@ -88,7 +88,11 @@ class MainActivity : ComponentActivity() {
         AMapLocationClient.updatePrivacyAgree(this, true)
         locationClient = AMapLocationClient(this)
         locationClient.setLocationOption(getDefaultOption())
-        locationClient.setLocationListener {}
+        locationClient.setLocationListener {
+            println("locationCurrent: ${it.toStr()}")
+        }
+        locationClient.startLocation()
+
 
         val androidId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         setContent {
@@ -126,7 +130,7 @@ class MainActivity : ComponentActivity() {
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
                 // 权限已被授予
-                // startLocation()
+                // locationClient.startLocation()
             }
             else -> {
                 // 请求权限
@@ -151,16 +155,17 @@ class MainActivity : ComponentActivity() {
 
     private fun getDefaultOption(): AMapLocationClientOption {
         val mOption = AMapLocationClientOption()
-        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
-        mOption.isGpsFirst = true
-        mOption.httpTimeOut = 30000
-        mOption.interval = 2000
-        mOption.isNeedAddress = true
-        mOption.isOnceLocation = false
-        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP)
-        mOption.isSensorEnable = false
-        mOption.isWifiScan = true
-        mOption.isLocationCacheEnable = true
+        mOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy //可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+        mOption.isGpsFirst = true //可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+        mOption.httpTimeOut = 30000 //可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
+        mOption.interval = 2000 //可选，设置定位间隔。默认为2秒
+        mOption.isNeedAddress = true //可选，设置是否返回逆地理地址信息。默认是true
+        mOption.isOnceLocation = false //可选，设置是否单次定位。默认是false
+        mOption.isOnceLocationLatest = false //可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP) //可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
+        mOption.isSensorEnable = false //可选，设置是否使用传感器。默认是false
+        mOption.isWifiScan = true //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
+        mOption.isLocationCacheEnable = true //可选，设置是否使用缓存定位，默认为true
         return mOption
     }
 }
